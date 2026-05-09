@@ -1,79 +1,153 @@
 // ------------------------------------------------------------
-// cluster.page.js — FINAL VERSION WITH CLOUD REBUILD
+// cluster.page.js — VISIBILITY PAGING USING PRELOADED NODES
 // ------------------------------------------------------------
 const ClusterPageMod = {
   page: 1,
   perPage: 10,
   totalPages: 1,
-  bands: [],
+  bandNodes: [],
   app: null,
 
   init(app) {
     this.app = app;
 
-    // read bands from JSON
-    this.bands = (app.data && Array.isArray(app.data.bands)) ? app.data.bands : [];
-    this.totalPages = Math.max(1, Math.ceil(this.bands.length / this.perPage));
+    // ⭐ GET ALL BAND NODES FROM PRELOADED GALAXY
+    this.bandNodes = ClusterMod.nodes.filter(n => n.userData.type === "band");
 
-    // ⭐ FIRST PAGE LOAD (with clouds)
-    this.loadPage(1);
+    // ⭐ COMPUTE TOTAL PAGES
+    this.totalPages = Math.max(1, Math.ceil(this.bandNodes.length / this.perPage));
+
+    // ⭐ SHOW FIRST PAGE
+    this.showPage(1);
   },
 
-  getPageBands(page) {
-    const p = Math.min(Math.max(page, 1), this.totalPages);
-    const start = (p - 1) * this.perPage;
-    return this.bands.slice(start, start + this.perPage);
-  },
+  // ------------------------------------------------------------
+  // SHOW ONLY BANDS FOR CURRENT PAGE
+  // ------------------------------------------------------------
+showPage(page) {
 
-  loadPage(page) {
-    if (!this.app) return;
+  // ------------------------------------------------------------
+  // PAGE NUMBER
+  // ------------------------------------------------------------
+  if (!this.app) return;
 
-    // clamp page
-    this.page = Math.min(Math.max(page, 1), this.totalPages);
+  this.page = Math.min(Math.max(page, 1), this.totalPages);
 
-    const sliced = this.getPageBands(this.page);
+  const start = (this.page - 1) * this.perPage;
+  const end   = start + this.perPage;
 
-    // clone full JSON, replace only bands
-    const newData = {
-      ...this.app.data,
-      bands: sliced
-    };
+
+  // ------------------------------------------------------------
+  // HIDE ALL BANDS
+  // ------------------------------------------------------------
+  this.bandNodes.forEach(bandNode => {
+    this.setBranchVisible(bandNode, false);
+  });
+
+
+  // ------------------------------------------------------------
+  // SHOW ONLY BANDS FOR THIS PAGE
+  // ------------------------------------------------------------
+  this.bandNodes.slice(start, end).forEach(bandNode => {
+    this.setBranchVisible(bandNode, true);
+  });
+
+
+  // ------------------------------------------------------------
+  // HARD CLAMP — HIDE TIME LABELS + PROGRESS ON NON‑FIRST PAGES
+  // ------------------------------------------------------------
+  if (this.page !== 1) {
+
+    if (AudioMod.timeLabelCurrent)
+      AudioMod.timeLabelCurrent.style.display = "none";
+
+    if (AudioMod.timeLabelTotal)
+      AudioMod.timeLabelTotal.style.display = "none";
+
+    if (AudioMod.progressBaseLine)
+      AudioMod.progressBaseLine.visible = false;
+
+    if (AudioMod.progressFillLine)
+      AudioMod.progressFillLine.visible = false;
+
+  } else {
 
     // ------------------------------------------------------------
-    // ⭐ CLEAR OLD GALAXY
+    // RESTORE WHEN RETURNING TO PAGE 1
     // ------------------------------------------------------------
-    if (ClusterMod.clear) {
-      ClusterMod.clear(this.app);
-    } else {
-      this.app.scene.children = this.app.scene.children.filter(obj => obj.isLight);
+    if (AudioMod.currentTrackNode) {
+
+      if (AudioMod.timeLabelCurrent)
+        AudioMod.timeLabelCurrent.style.display = "block";
+
+      if (AudioMod.timeLabelTotal)
+        AudioMod.timeLabelTotal.style.display = "block";
+
+      if (AudioMod.progressBaseLine)
+        AudioMod.progressBaseLine.visible = true;
+
+      if (AudioMod.progressFillLine)
+        AudioMod.progressFillLine.visible = true;
     }
+  }
 
-    // ------------------------------------------------------------
-    // ⭐ REBUILD CLOUDS (ALWAYS)
-    // ------------------------------------------------------------
-    if (Clouds && Clouds.init) {
-      Clouds.init(this.app);
+
+  // ------------------------------------------------------------
+  // UPDATE UI BUTTONS
+  // ------------------------------------------------------------
+  this.updateButtons();
+  const num = document.getElementById("page-number");
+  if (num) num.textContent = this.page;
+},
+
+
+
+  // ------------------------------------------------------------
+  // RECURSIVE VISIBILITY FOR BAND → ALBUMS → TRACKS
+  // ------------------------------------------------------------
+setBranchVisible(node, visible) {
+  if (!node) return;
+
+  // hide/show the node itself
+  node.visible = visible;
+
+  // hide/show all lines attached to this node
+  if (node.userData?.lines) {
+    node.userData.lines.forEach(line => {
+      line.visible = visible;
+    });
+  }
+
+  // hide/show any lines that reference this node as parent or child
+  ClusterMod.nodes.forEach(n => {
+    if (n.userData?.lines) {
+      n.userData.lines.forEach(line => {
+        const p = line.userData?.parent;
+        const c = line.userData?.child;
+        if (p === node || c === node) {
+          line.visible = visible;
+        }
+      });
     }
+  });
 
-    // ------------------------------------------------------------
-    // ⭐ BUILD NEW PAGE STARS
-    // ------------------------------------------------------------
-    ClusterMod.buildFromJSON(this.app, newData);
+  // recursively hide/show children
+  if (node.userData?.children) {
+    node.userData.children.forEach(child => {
+      this.setBranchVisible(child, visible);
+    });
+  }
+},
 
-    // ------------------------------------------------------------
-    // UI UPDATE
-    // ------------------------------------------------------------
-    this.updateButtons();
-    const num = document.getElementById("page-number");
-    if (num) num.textContent = this.page;
-  },
-
+  // ------------------------------------------------------------
+  // NAVIGATION
+  // ------------------------------------------------------------
   next() {
-    this.loadPage(this.page + 1);
+    this.showPage(this.page + 1);
   },
 
   prev() {
-    this.loadPage(this.page - 1);
+    this.showPage(this.page - 1);
   },
 
   updateButtons() {

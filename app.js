@@ -34,64 +34,73 @@ const App = {
     }
   },
 
+// ------------------------------------------------------------
+// INIT
+// ------------------------------------------------------------
+async init() {
+  this.data = await this.loadJSON("Setlist/Setlist.json");
+
+  // Scene
+  this.scene = new THREE.Scene();
+
+  // Camera
+  this.camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 8000);
+  this.camera.position.set(0, 0, 450);
+
+  // Renderer
+  this.renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    canvas: document.getElementById("galaxy")
+  });
+  this.renderer.setSize(innerWidth, innerHeight);
+  this.renderer.setPixelRatio(devicePixelRatio);
+
+  // Light
+  const light = new THREE.AmbientLight(0xffffff, 1.3);
+  this.scene.add(light);
+
+  // Controls
+  this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+  this.controls.enablePan = false;
+  this.controls.rotateSpeed = 0.8;
+
+  // Audio + Video
+  this.audio = document.getElementById("audio");
+  this.video = document.getElementById("video");
+
+  // Events
+  window.addEventListener("resize", () => this.onResize());
+  window.addEventListener("mousemove", e => this.onMouseMove(e));
+  window.addEventListener("click", e => this.onClick(e));
+  window.addEventListener("keydown", e => this.keys[e.key.toLowerCase()] = true);
+  window.addEventListener("keyup", e => this.keys[e.key.toLowerCase()] = false);
+
+  // Init modules
+  this.modules.forEach(m => m.init && m.init(this));
+
   // ------------------------------------------------------------
-  // INIT
+  // ⭐ FULL GALAXY BUILD (NO PAGING HERE)
   // ------------------------------------------------------------
-  async init() {
-    this.data = await this.loadJSON("Setlist/Setlist.json");
 
-    // Scene
-    this.scene = new THREE.Scene();
+  // 1) Preload all bands → albums → tracks (invisible)
+  if (ClusterMod.LoadBandAlbumTrack) {
+    ClusterMod.LoadBandAlbumTrack(this, this.data);
+  }
 
-    // Camera
-    this.camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 8000);
-    this.camera.position.set(0, 0, 450);
+  // 2) Build visible galaxy once
+  if (ClusterMod.buildFromJSON) {
+    ClusterMod.buildFromJSON(this, this.data);
+  }
 
-    // Renderer
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      canvas: document.getElementById("galaxy")
-    });
-    this.renderer.setSize(innerWidth, innerHeight);
-    this.renderer.setPixelRatio(devicePixelRatio);
+  // 3) ⭐ Init paging AFTER galaxy is built
+  if (ClusterPageMod.init) {
+    ClusterPageMod.init(this);
+  }
 
-    // Light
-    const light = new THREE.AmbientLight(0xffffff, 1.3);
-    this.scene.add(light);
+  // Start loop
+  this.animate();
+},
 
-    // Controls
-    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enablePan = false;
-    this.controls.rotateSpeed = 0.8;
-
-    // Audio + Video
-    this.audio = document.getElementById("audio");
-    this.video = document.getElementById("video");
-
-    // Events
-    window.addEventListener("resize", () => this.onResize());
-    window.addEventListener("mousemove", e => this.onMouseMove(e));
-    window.addEventListener("click", e => this.onClick(e));
-    window.addEventListener("keydown", e => this.keys[e.key.toLowerCase()] = true);
-    window.addEventListener("keyup", e => this.keys[e.key.toLowerCase()] = false);
-
-    // Init modules
-    this.modules.forEach(m => m.init && m.init(this));
-
-    // ------------------------------------------------------------
-    // PAGE SYSTEM (ClusterPageMod)
-    // ------------------------------------------------------------
-    if (window.ClusterPageMod) {
-      ClusterPageMod.init(this);
-      const pageBands = ClusterPageMod.getPageBands(this);
-      ClusterMod.buildFromJSON(this, pageBands);
-    } else {
-      ClusterMod.buildFromJSON(this, this.data.bands);
-    }
-
-    // Start loop
-    this.animate();
-  },
 
   // ------------------------------------------------------------
   // RESIZE
@@ -113,7 +122,7 @@ const App = {
 
   // ------------------------------------------------------------
   // CLICK HANDLER (raycast)
-  // ------------------------------------------------------------
+// ------------------------------------------------------------
   onClick(e) {
 
     // CLICK‑TO‑SEEK

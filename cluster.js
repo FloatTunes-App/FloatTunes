@@ -98,6 +98,7 @@ window.ClusterMod = {
 
     this.nodes.push(node);
     node.callback = () => this.expandAlbums(app, node);
+    return node;
   },
 
   // ------------------------------------------------------------

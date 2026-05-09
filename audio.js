@@ -4,6 +4,7 @@ const app = window.app;
 // AUDIO MODULE — PROGRESS BALL • RELATED • LYRICS
 // ------------------------------------------------------------
 window.AudioMod = {
+  suspendTimeLabel: false,
   name: "audio",
 
   // ------------------------------------------------------------
@@ -30,7 +31,8 @@ window.AudioMod = {
   hoverTitle: null,
   timeLabelCurrent: null,  // near moving light
   timeLabelTotal: null,    // bottom-right total time
-
+  
+  
   // ------------------------------------------------------------
   // INIT
   // ------------------------------------------------------------
@@ -145,22 +147,16 @@ playTrack(app, track, node) {
 
   // Update UI title + lyrics path
   this.updateTitle(app, track);
+  UIMod.showPauseState();
 
-  // ------------------------------------------------------------
-  // AUTO‑GENERATE LYRICS PATH (ONLY mp3, flac, mp4)
-  // ------------------------------------------------------------
+  // AUTO‑GENERATE LYRICS PATH
   let lyricsPath = "";
-
   if (track.file) {
     lyricsPath = track.file.replace(/\.(mp3|flac|mp4)$/i, ".txt");
   }
-
-  // JSON lyrics overrides auto-detected path
   app.currentLyricsPath = track.lyrics || lyricsPath;
 
-  // ------------------------------------------------------------
   // AUTO‑REFRESH LYRICS IF PANEL IS OPEN
-  // ------------------------------------------------------------
   if (UIMod.lyricsPanel && UIMod.lyricsPanel.style.display === "block") {
     UIMod.toggleLyrics();   // close
     UIMod.toggleLyrics();   // reopen with new lyrics
@@ -175,9 +171,14 @@ playTrack(app, track, node) {
   // Update control bar
   this.updateControlBar(track);
 
-  UIMod.showPauseState();
-
+  // ✅ RESTORE TIME LABELS WHEN A TRACK STARTS
+  this.suspendTimeLabel = false;
+  if (this.timeLabelCurrent)
+    this.timeLabelCurrent.style.display = "block";
+  if (this.timeLabelTotal)
+    this.timeLabelTotal.style.display = "block";
 },
+
 
   // ------------------------------------------------------------
   // CREATE / UPDATE PROGRESS LINE
@@ -253,7 +254,6 @@ this.progressEnd = nextNode.position.clone().sub(dir.clone().multiplyScalar(radi
   this.progressFillLine = new THREE.Line(fillGeo, fillMat);
   app.scene.add(this.progressFillLine);
 },
-
 
 // ------------------------------------------------------------
 // UPDATE PROGRESS LINE + TIME
@@ -420,7 +420,6 @@ playNext(app) {
   this.playTrack(app, nextNode.userData.track, nextNode);
 },
 
-
 playPrev(app) {
   if (!this.currentTrackNode) return;
 
@@ -459,8 +458,6 @@ playPrev(app) {
   const prevNode = contextNodes[idx];
   this.playTrack(app, prevNode.userData.track, prevNode);
 },
-
-
 
 // ------------------------------------------------------------
 // RELATED MODE TOGGLE
@@ -657,7 +654,6 @@ this.relatedNodes.forEach((node, i) => {
   const activeNode = this.relatedNodes[this.relatedIndex];
   this.playTrack(app, activeNode.userData.track, activeNode);
 },
-
 
   // ------------------------------------------------------------
   // LYRICS
