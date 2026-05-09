@@ -67,6 +67,34 @@ html, body {
 }
 
 /* ------------------------------------------------------------
+   PAGE SWITCH (< 1 >)
+------------------------------------------------------------ */
+.page-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  color: #fff;
+  text-shadow: 0 0 10px #00eaff;
+  user-select: none;
+}
+
+.page-btn {
+  cursor: pointer;
+  opacity: 0.8;
+  transition: 0.2s;
+}
+
+.page-btn:hover {
+  opacity: 1;
+}
+
+#page-number {
+  font-weight: bold;
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
    BOTTOM CONTROL BAR
 ------------------------------------------------------------ */
 #bottom-bar {
@@ -105,7 +133,6 @@ html, body {
 /* ------------------------------------------------------------
    ACTIVE GLOW (Repeat, Shuffle, Related)
 ------------------------------------------------------------ */
-/* Active glow for buttons */
 #btn-repeat.active,
 #btn-shuffle.active,
 #btn-related.active {
@@ -113,63 +140,11 @@ html, body {
   filter: drop-shadow(0 0 6px #ffcc66);
 }
 
-/* Ensure SVG inside active buttons also glows */
 #btn-repeat.active svg,
 #btn-shuffle.active svg,
 #btn-related.active svg {
   fill: #ffcc66;
   filter: drop-shadow(0 0 6px #ffcc66);
-}
-
-/* ------------------------------------------------------------
-   RIGHT SIDE (Timeline)
------------------------------------------------------------- */
-#bottom-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-/* ------------------------------------------------------------
-   TIMELINE
------------------------------------------------------------- */
-#progress-bar {
-  width: 180px;
-  height: 4px;
-  background: rgba(255,255,255,0.25);
-  border-radius: 2px;
-  box-shadow: 0 0 6px rgba(0,255,255,0.3);
-}
-
-#time-row {
-  display: flex;
-  justify-content: space-between;
-  width: 180px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.8);
-  text-shadow: 0 0 6px #00eaff;
-}
-
-/* ------------------------------------------------------------
-   TEXT BUTTONS
------------------------------------------------------------- */
-.text-btn {
-  padding: 6px 14px;
-  background: rgba(30,30,30,0.7);
-  border: 1px solid rgba(255,255,255,0.25);
-  color: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: 0.2s;
-  text-shadow: 0 0 6px #00eaff;
-}
-
-.text-btn:hover {
-  background: rgba(80,80,80,0.9);
-  border-color: rgba(0,255,255,0.6);
-  box-shadow: 0 0 10px #00eaff;
 }
 
 /* ------------------------------------------------------------
@@ -205,6 +180,27 @@ html, body {
 #btn-play svg {
   width: 26px;
   height: 26px;
+}
+
+/* ------------------------------------------------------------
+   TEXT BUTTONS
+------------------------------------------------------------ */
+.text-btn {
+  padding: 6px 14px;
+  background: rgba(30,30,30,0.7);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+  text-shadow: 0 0 6px #00eaff;
+}
+
+.text-btn:hover {
+  background: rgba(80,80,80,0.9);
+  border-color: rgba(0,255,255,0.6);
+  box-shadow: 0 0 10px #00eaff;
 }
 
 /* ------------------------------------------------------------

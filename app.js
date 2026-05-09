@@ -78,9 +78,15 @@ const App = {
     // Init modules
     this.modules.forEach(m => m.init && m.init(this));
 
-    // Build galaxy
-    if (this.data && window.ClusterMod) {
-      ClusterMod.buildFromJSON(this, this.data);
+    // ------------------------------------------------------------
+    // PAGE SYSTEM (ClusterPageMod)
+    // ------------------------------------------------------------
+    if (window.ClusterPageMod) {
+      ClusterPageMod.init(this);
+      const pageBands = ClusterPageMod.getPageBands(this);
+      ClusterMod.buildFromJSON(this, pageBands);
+    } else {
+      ClusterMod.buildFromJSON(this, this.data.bands);
     }
 
     // Start loop
@@ -144,7 +150,6 @@ const App = {
     if (hits.length > 0) {
       const obj = hits[0].object;
 
-      // Track priority
       if (obj.isTrack) {
         obj.callback && obj.callback();
         return;
@@ -156,7 +161,6 @@ const App = {
       }
     }
 
-    // Pass click to modules
     this.modules.forEach(m => m.onClick && m.onClick(this, e));
   },
 
@@ -192,6 +196,7 @@ App.register(UIMod);
 App.register(ProgressMod);
 App.register(RaycastMod);
 App.register(MovementMod);
+App.register(ClusterPageMod);
 
 // ------------------------------------------------------------
 // START

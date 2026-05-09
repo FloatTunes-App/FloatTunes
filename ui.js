@@ -8,20 +8,19 @@ const UIMod = {
     this.app = app;
 
     // DOM elements
-    this.trackTitle   = document.getElementById("track-title");
-    this.lyricsPanel  = document.getElementById("lyrics-panel");
+    this.trackTitle  = document.getElementById("track-title");
+    this.lyricsPanel = document.getElementById("lyrics-panel");
 
     // Buttons
-    this.btnBack      = document.getElementById("btn-back");
-    this.btnLyrics    = document.getElementById("btn-lyrics");
-    this.btnRelated   = document.getElementById("btn-related");
+    this.btnLyrics  = document.getElementById("btn-lyrics");
+    this.btnRelated = document.getElementById("btn-related");
 
-    this.btnPlay      = document.getElementById("btn-play");
-    this.btnPause     = document.getElementById("btn-pause");
-    this.btnPrev      = document.getElementById("btn-prev");
-    this.btnNext      = document.getElementById("btn-next");
-    this.btnRepeat    = document.getElementById("btn-repeat");
-    this.btnShuffle   = document.getElementById("btn-shuffle");
+    this.btnPlay    = document.getElementById("btn-play");
+    this.btnPause   = document.getElementById("btn-pause");
+    this.btnPrev    = document.getElementById("btn-prev");
+    this.btnNext    = document.getElementById("btn-next");
+    this.btnRepeat  = document.getElementById("btn-repeat");
+    this.btnShuffle = document.getElementById("btn-shuffle");
 
     // ------------------------------------------------------------
     // PLAY
@@ -40,17 +39,15 @@ const UIMod = {
     };
 
     // ------------------------------------------------------------
-    // NEXT / PREV (call AudioMod engine)
+    // NEXT / PREV
     // ------------------------------------------------------------
     this.btnNext.onclick = () => {
-      console.log("[UIMod] NEXT clicked");
-      AudioMod.playNext(this.app);
+      AudioMod.playNext(app);
       this.showPauseState();
     };
 
     this.btnPrev.onclick = () => {
-      console.log("[UIMod] PREV clicked");
-      AudioMod.playPrev(this.app);
+      AudioMod.playPrev(app);
       this.showPauseState();
     };
 
@@ -67,8 +64,6 @@ const UIMod = {
       } else {
         this.btnRepeat.classList.remove("active");
       }
-
-      console.log("[UIMod] REPEAT =", AudioMod.repeat);
     };
 
     // ------------------------------------------------------------
@@ -84,16 +79,13 @@ const UIMod = {
       } else {
         this.btnShuffle.classList.remove("active");
       }
-
-      console.log("[UIMod] SHUFFLE =", AudioMod.shuffle);
     };
 
     // ------------------------------------------------------------
     // RELATED
     // ------------------------------------------------------------
     this.btnRelated.onclick = () => {
-      console.log("[UIMod] RELATED clicked");
-      AudioMod.toggleRelated(this.app);
+      AudioMod.toggleRelated(app);
       this.btnRelated.classList.toggle("active", AudioMod.relatedMode);
     };
 
@@ -103,9 +95,13 @@ const UIMod = {
     this.btnLyrics.onclick = () => this.toggleLyrics();
 
     // ------------------------------------------------------------
-    // BACK
+    // PAGE SWITCH BUTTONS (< 1 >)
     // ------------------------------------------------------------
-    this.btnBack.onclick = () => ClusterMod.backToRoot(app);
+    const prev = document.getElementById("page-prev");
+    const next = document.getElementById("page-next");
+
+    if (prev) prev.onclick = () => ClusterPageMod.prev(app);
+    if (next) next.onclick = () => ClusterPageMod.next(app);
   },
 
   // ------------------------------------------------------------

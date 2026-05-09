@@ -174,6 +174,9 @@ playTrack(app, track, node) {
 
   // Update control bar
   this.updateControlBar(track);
+
+  UIMod.showPauseState();
+
 },
 
   // ------------------------------------------------------------
