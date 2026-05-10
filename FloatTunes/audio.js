@@ -175,9 +175,9 @@ playTrack(app, track, node) {
   // ------------------------------------------------------------
   this.updateTitle(app, track);
   // ⭐ Do NOT force PAUSE if video is closed or closing
-if (!(app.isVideo && VideoMod.panel.style.display === "none")) {
+  if (!(app.isVideo && VideoMod.panel.style.display === "none")) {
     UIMod.showPauseState();
-}
+  }
 
   // AUTO‑GENERATE LYRICS PATH
   let lyricsPath = track.file.replace(/\.(mp3|flac|mp4)$/i, ".txt");
@@ -202,8 +202,13 @@ if (!(app.isVideo && VideoMod.panel.style.display === "none")) {
   this.suspendTimeLabel = false;
   if (this.timeLabelCurrent) this.timeLabelCurrent.style.display = "block";
   if (this.timeLabelTotal) this.timeLabelTotal.style.display = "block";
-},
 
+  if (this.relatedMode) {
+  if (!this.relatedNodes.includes(node)) {
+    this.clearRelated(app);
+   }
+  }
+},
 
   // ------------------------------------------------------------
   // CREATE / UPDATE PROGRESS LINE
