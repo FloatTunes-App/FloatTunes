@@ -122,9 +122,7 @@ window.AudioMod = {
   // PLAY TRACK
   // ------------------------------------------------------------
 playTrack(app, track, node) {
-  // FIX: ensure app is defined
   if (!app) app = window.app;
-
   if (!track || !node) return;
 
   this.currentTrackNode = node;
@@ -132,28 +130,57 @@ playTrack(app, track, node) {
   // Stop both players
   app.audio.pause();
   app.video.pause();
-  app.video.style.display = "none";
 
-  const isVideo = track.file.toLowerCase().endsWith(".mp4");
+  // ------------------------------------------------------------
+  // FIX: Encode URL so MP4 loads correctly
+  // ------------------------------------------------------------
+  let fileURL = encodeURI(track.file);
+  const isVideo = fileURL.toLowerCase().endsWith(".mp4");
 
+  // ------------------------------------------------------------
+  // ⭐ STORE STATE FOR FOOTER BUTTONS
+  // ------------------------------------------------------------
+  app.currentTrack = track;          // footer needs this
+  app.currentFileURL = fileURL;      // footer reloads this
+  app.isVideo = isVideo;             // footer detects video mode
+
+  // ------------------------------------------------------------
+  // VIDEO MODE
+  // ------------------------------------------------------------
   if (isVideo) {
-    app.video.src = track.file;
-    app.video.style.display = "block";
-    app.video.play();
+
+    // Hide audio player
+    app.audio.src = "";
+    app.audio.pause();
+
+    // Load video through VideoMod
+    VideoMod.load(fileURL);
+
   } else {
-    app.audio.src = track.file;
+
+    // ------------------------------------------------------------
+    // AUDIO MODE
+    // ------------------------------------------------------------
+    VideoMod.hide(); // hide video panel
+
+    app.video.src = "";
+    app.video.pause();
+
+    app.audio.src = fileURL;
     app.audio.play();
   }
 
-  // Update UI title + lyrics path
+  // ------------------------------------------------------------
+  // UPDATE UI TITLE + LYRICS
+  // ------------------------------------------------------------
   this.updateTitle(app, track);
-  UIMod.showPauseState();
+  // ⭐ Do NOT force PAUSE if video is closed or closing
+if (!(app.isVideo && VideoMod.panel.style.display === "none")) {
+    UIMod.showPauseState();
+}
 
   // AUTO‑GENERATE LYRICS PATH
-  let lyricsPath = "";
-  if (track.file) {
-    lyricsPath = track.file.replace(/\.(mp3|flac|mp4)$/i, ".txt");
-  }
+  let lyricsPath = track.file.replace(/\.(mp3|flac|mp4)$/i, ".txt");
   app.currentLyricsPath = track.lyrics || lyricsPath;
 
   // AUTO‑REFRESH LYRICS IF PANEL IS OPEN
@@ -171,12 +198,10 @@ playTrack(app, track, node) {
   // Update control bar
   this.updateControlBar(track);
 
-  // ✅ RESTORE TIME LABELS WHEN A TRACK STARTS
+  // Restore time labels
   this.suspendTimeLabel = false;
-  if (this.timeLabelCurrent)
-    this.timeLabelCurrent.style.display = "block";
-  if (this.timeLabelTotal)
-    this.timeLabelTotal.style.display = "block";
+  if (this.timeLabelCurrent) this.timeLabelCurrent.style.display = "block";
+  if (this.timeLabelTotal) this.timeLabelTotal.style.display = "block";
 },
 
 

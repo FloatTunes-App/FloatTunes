@@ -207,6 +207,7 @@ App.register(RaycastMod);
 App.register(MovementMod);
 App.register(ClusterPageMod);
 App.register(FloatTunesMobile);
+App.register(VideoMod);
 
 // ------------------------------------------------------------
 // START

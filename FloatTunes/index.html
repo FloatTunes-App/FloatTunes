@@ -9,7 +9,8 @@
 
   <!-- DESKTOP STYLE -->
   <link rel="stylesheet" href="style.css">
-
+ <link rel="stylesheet" href="video.style.css">
+ 
   <!-- MOBILE STYLE (auto-applies on small screens) -->
   <link rel="stylesheet" href="FloatTunes.style.css" media="(max-width: 900px)">
 </head>
@@ -90,9 +91,9 @@
 
   </div>
 
-  <!-- VIDEO PANEL -->
   <div id="video-panel">
-    <video id="video" controls></video>
+  <div id="video-close">✕</div>
+  <video id="video" controls playsinline></video>
   </div>
 
   <!-- LYRICS PANEL -->
@@ -115,6 +116,8 @@
   <script src="movement.js"></script>
   <script src="cover.js"></script>
   <script src="cluster.page.js"></script>
+  <script src="video.js"></script>
+
 
   <!-- MOBILE ENGINE (auto-detects mobile) -->
   <script src="FloatTunes.mobile.js"></script>

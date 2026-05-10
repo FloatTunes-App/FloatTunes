@@ -26,6 +26,15 @@ const UIMod = {
     // PLAY
     // ------------------------------------------------------------
     this.btnPlay.onclick = () => {
+
+      // If current track is a video → reopen video panel
+      if (app.isVideo && app.currentFileURL) {
+        VideoMod.load(app.currentFileURL);
+        this.showPauseState();
+        return;
+      }
+
+      // Normal audio play
       app.audio.play();
       this.showPauseState();
     };
@@ -34,6 +43,30 @@ const UIMod = {
     // PAUSE
     // ------------------------------------------------------------
     this.btnPause.onclick = () => {
+
+      // If current track is a video
+      if (app.isVideo) {
+
+        // If video panel is open → pause video
+        if (VideoMod.video && VideoMod.panel.style.display !== "none") {
+          VideoMod.video.pause();
+          this.showPlayState();
+          return;
+        }
+
+        // If video panel is already closed → force PLAY state
+        this.showPlayState();
+
+        // Hard reset footer buttons
+        if (this.btnPlay && this.btnPause) {
+          this.btnPlay.style.display  = "inline-block";
+          this.btnPause.style.display = "none";
+        }
+
+        return;
+      }
+
+      // Normal audio pause
       app.audio.pause();
       this.showPlayState();
     };
@@ -108,6 +141,12 @@ const UIMod = {
   // UI STATE HELPERS
   // ------------------------------------------------------------
   showPauseState() {
+
+    // Do NOT force PAUSE if video is closed
+    if (this.app.isVideo && VideoMod.panel.style.display === "none") {
+      return;
+    }
+
     this.btnPlay.style.display = "none";
     this.btnPause.style.display = "inline-flex";
   },
