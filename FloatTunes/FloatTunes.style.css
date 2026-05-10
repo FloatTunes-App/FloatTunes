@@ -1,9 +1,6 @@
 /* ------------------------------------------------------------
-   FLOATTUNES MOBILE — Bottom Stacked Controls (FINAL ORDER)
-   Row 3 (top): prev / play / pause / next / repeat / shuffle
-   Row 2 (middle): lyrics / related
-   Row 1 (bottom): < 1 >
------------------------------------------------------------- */
+   FLOATTUNES MOBILE
+  ------------------------------------------------------------ */
 @media (max-width: 900px) {
 
   html, body {
@@ -112,7 +109,7 @@
   }
 
 /* ------------------------------------------------------------
-   FLOATTUNES MOBILE — Lyrics Panel (flush with footer top)
+   FLOATTUNES MOBILE 
 ------------------------------------------------------------ */
 @media (max-width: 900px) {
   #lyrics-panel {
