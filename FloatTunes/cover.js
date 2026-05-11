@@ -1,32 +1,37 @@
 // ------------------------------------------------------------
-// COVER MODULE — Instagram-style holographic avatar
+// COVER MODULE — Holographic Band Cover (SAFE VERSION)
 // ------------------------------------------------------------
 window.CoverMod = {
   name: "cover",
 
-  createCover(app, band, x, y, z) {
+  createCover(app, data, x, y, z) {
+    // data may be band, album, track, or generic
+    const coverUrl = data.cover || data.hoverCover || "";
+    const title    = data.name || data.title || data.hoverTitle || "Unknown";
+
     // --- Band cover circle (always faces camera) ---
-    const tex = new THREE.TextureLoader().load(band.cover);
+    const tex = new THREE.TextureLoader().load(coverUrl);
     const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
-    const geo = new THREE.CircleGeometry(12, 64); // circular avatar
+    const geo = new THREE.CircleGeometry(12, 64);
     const cover = new THREE.Mesh(geo, mat);
     cover.position.set(x, y, z);
 
-    // Billboard: lock orientation to camera
+    // Billboard
     cover.onBeforeRender = (renderer, scene, camera) => {
       cover.quaternion.copy(camera.quaternion);
     };
 
+    // ⭐ SAFE userData (never breaks)
     cover.userData = {
       type: "bandCover",
-      band,
-      hoverTitle: band.name || "Unknown Band",
-      hoverCover: band.cover || ""
+      band: data.band || data,     // if data is band, use it; else fallback
+      hoverTitle: title,
+      hoverCover: coverUrl
     };
 
     app.scene.add(cover);
 
-    // --- Futuristic holographic outline ---
+    // --- Holographic ring ---
     const ringGeo = new THREE.TorusGeometry(13, 0.4, 32, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
@@ -36,24 +41,22 @@ window.CoverMod = {
     });
     const ring = new THREE.Mesh(ringGeo, ringMat);
 
-    // Billboard ring too
     ring.onBeforeRender = (renderer, scene, camera) => {
       ring.quaternion.copy(camera.quaternion);
     };
 
     cover.add(ring);
 
-    // --- Subtle holographic swing animation ---
+    // Animation
     cover.tick = () => {
-      ring.rotation.z += 0.01; // slow spin
-      ring.material.opacity = 0.5 + Math.sin(Date.now() * 0.002) * 0.2; // pulsing glow
+      ring.rotation.z += 0.01;
+      ring.material.opacity = 0.5 + Math.sin(Date.now() * 0.002) * 0.2;
     };
 
     return cover;
   },
 
   update(app, dt) {
-    // Animate all covers
     app.scene.traverse(obj => {
       if (obj.tick) obj.tick();
     });

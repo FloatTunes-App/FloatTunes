@@ -515,6 +515,7 @@ clearRelated(app) {
     this.baseLine = null;
   }
 
+  // clear visuals on all nodes
   ClusterMod.nodes.forEach(n => {
     if (n.userData.numberSprite) {
       n.remove(n.userData.numberSprite);
@@ -551,7 +552,7 @@ createRelatedBaseLine(app) {
 },
 
 // ------------------------------------------------------------
-// BUILD RELATED — SAME GENRE, CROSS BAND/ALBUM
+// BUILD RELATED — SAME GENRE, CROSS BAND/ALBUM (PAGE-LOCAL)
 // ------------------------------------------------------------
 async buildRelated(app) {
   if (!this.currentTrackNode) return;
@@ -565,41 +566,45 @@ async buildRelated(app) {
   const currentBand  = currentBandNode?.userData.band;
 
   // Detect genre
- function normalizeGenre(g) {
-  if (!g) return [];
-  if (Array.isArray(g)) return g.map(s => s.toLowerCase());
-  return g.toLowerCase().split(/[,/]/).map(s => s.trim());
-}
+  function normalizeGenre(g) {
+    if (!g) return [];
+    if (Array.isArray(g)) return g.map(s => s.toLowerCase());
+    return g.toLowerCase().split(/[,/]/).map(s => s.trim());
+  }
 
-const genres = [
-  ...normalizeGenre(currentTrack?.genre),
-  ...normalizeGenre(currentAlbum?.genre),
-  ...normalizeGenre(currentBand?.genre)
-];
+  const genres = [
+    ...normalizeGenre(currentTrack?.genre),
+    ...normalizeGenre(currentAlbum?.genre),
+    ...normalizeGenre(currentBand?.genre)
+  ];
 
-if (!genres.length) return;
-
+  if (!genres.length) return;
 
   // ------------------------------------------------------------
-  // 1. FIND SAME-GENRE BANDS (LIMIT TO 3)
+  // 1. FIND SAME-GENRE BANDS (LIMIT TO 3, CURRENT PAGE ONLY)
   // ------------------------------------------------------------
-  const allBandNodes = ClusterMod.nodes.filter(n => n.userData.band);
-  const sameGenreBands = allBandNodes.filter(b => {
-  const bandGenres = normalizeGenre(b.userData.band.genre);
-  return bandGenres.some(bg =>
-    genres.some(g => bg.includes(g) || g.includes(bg))
+  // only bands that are actually visible (current page)
+  const allBandNodes = ClusterMod.nodes.filter(
+    n => n.userData.band && n.visible
   );
-}).slice(0, 3);
+
+  const sameGenreBands = allBandNodes
+    .filter(b => {
+      const bandGenres = normalizeGenre(b.userData.band.genre);
+      return bandGenres.some(bg =>
+        genres.some(g => bg.includes(g) || g.includes(bg))
+      );
+    })
+    .slice(0, 3);
+
+  if (!sameGenreBands.length) return;
 
   // ------------------------------------------------------------
   // 2. FORCE EXPAND 3 ALBUMS + ALL TRACKS FOR EACH BAND
   // ------------------------------------------------------------
   for (let bandNode of sameGenreBands) {
-
-    // expand 3 albums
     ClusterMod.forceExpandAlbums(app, bandNode);
 
-    // expand tracks inside those 3 albums
     const albums = bandNode.userData.children.slice(0, 3);
     for (let albumNode of albums) {
       await ClusterMod.forceExpandTracks(app, albumNode);
@@ -619,6 +624,8 @@ if (!genres.length) return;
     });
   });
 
+  if (!expandedTracks.length) return;
+
   // ------------------------------------------------------------
   // 4. RANDOMIZE AND PICK 20
   // ------------------------------------------------------------
@@ -634,23 +641,22 @@ if (!genres.length) return;
   this.relatedIndex = this.relatedNodes.indexOf(currentNode);
   if (this.relatedIndex < 0) this.relatedIndex = 0;
 
-// ------------------------------------------------------------
-// DEBUG LOG — SHOW 20 TRACKS SELECTED FOR RELATED MODE
-// ------------------------------------------------------------
-console.log("RELATED:");
+  // ------------------------------------------------------------
+  // DEBUG LOG — SHOW 20 TRACKS SELECTED FOR RELATED MODE
+  // ------------------------------------------------------------
+  console.log("RELATED:");
+  this.relatedNodes.forEach((node, i) => {
+    const track  = node.userData.track;
+    const album  = node.userData.parent?.userData.album;
+    const band   = node.userData.parent?.userData.parent?.userData.band;
 
-this.relatedNodes.forEach((node, i) => {
-  const track  = node.userData.track;
-  const album  = node.userData.parent?.userData.album;
-  const band   = node.userData.parent?.userData.parent?.userData.band;
-
-  console.log(
-    `${i + 1}. ${band?.name || "Band"} — ${album?.title || "Album"} — ${track?.title || "Track"}`
-  );
-});
+    console.log(
+      `${i + 1}. ${band?.name || "Band"} — ${album?.title || "Album"} — ${track?.title || "Track"}`
+    );
+  });
 
   // ------------------------------------------------------------
-  // 5. CLEAR OLD VISUALS
+  // 5. CLEAR OLD VISUALS ON EXPANDED TRACKS
   // ------------------------------------------------------------
   expandedTracks.forEach(n => {
     if (n.userData.numberSprite) {
@@ -684,6 +690,7 @@ this.relatedNodes.forEach((node, i) => {
   const activeNode = this.relatedNodes[this.relatedIndex];
   this.playTrack(app, activeNode.userData.track, activeNode);
 },
+
 
   // ------------------------------------------------------------
   // LYRICS

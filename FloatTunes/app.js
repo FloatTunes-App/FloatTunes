@@ -34,72 +34,70 @@ const App = {
     }
   },
 
-// ------------------------------------------------------------
-// INIT
-// ------------------------------------------------------------
-async init() {
-  this.data = await this.loadJSON("Setlist/Setlist.json");
-
-  // Scene
-  this.scene = new THREE.Scene();
-
-  // Camera
-  this.camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 8000);
-  this.camera.position.set(0, 0, 450);
-
-  // Renderer
-  this.renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    canvas: document.getElementById("galaxy")
-  });
-  this.renderer.setSize(innerWidth, innerHeight);
-  this.renderer.setPixelRatio(devicePixelRatio);
-
-  // Light
-  const light = new THREE.AmbientLight(0xffffff, 1.3);
-  this.scene.add(light);
-
-  // Controls
-  this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-  this.controls.enablePan = false;
-  this.controls.rotateSpeed = 0.8;
-
-  // Audio + Video
-  this.audio = document.getElementById("audio");
-  this.video = document.getElementById("video");
-
-  // Events
-  window.addEventListener("resize", () => this.onResize());
-  window.addEventListener("mousemove", e => this.onMouseMove(e));
-  window.addEventListener("click", e => this.onClick(e));
-  window.addEventListener("keydown", e => this.keys[e.key.toLowerCase()] = true);
-  window.addEventListener("keyup", e => this.keys[e.key.toLowerCase()] = false);
-
-  // Init modules
-  this.modules.forEach(m => m.init && m.init(this));
-
   // ------------------------------------------------------------
-  // ⭐ FULL GALAXY BUILD (NO PAGING HERE)
+  // INIT
   // ------------------------------------------------------------
+  async init() {
+    this.data = await this.loadJSON("Setlist/Setlist.json");
 
-  // 1) Preload all bands → albums → tracks (invisible)
-  if (ClusterMod.LoadBandAlbumTrack) {
-    ClusterMod.LoadBandAlbumTrack(this, this.data);
-  }
+    // Scene
+    this.scene = new THREE.Scene();
 
-  // 2) Build visible galaxy once
-  if (ClusterMod.buildFromJSON) {
-    ClusterMod.buildFromJSON(this, this.data);
-  }
+    // Camera
+    this.camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 8000);
+    this.camera.position.set(0, 0, 450);
 
-  // 3) ⭐ Init paging AFTER galaxy is built
-  if (ClusterPageMod.init) {
-    ClusterPageMod.init(this);
-  }
+    // Renderer
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      canvas: document.getElementById("galaxy")
+    });
+    this.renderer.setSize(innerWidth, innerHeight);
+    this.renderer.setPixelRatio(devicePixelRatio);
 
-  // Start loop
-  this.animate();
-},
+    // Light
+    this.scene.add(new THREE.AmbientLight(0xffffff, 1.3));
+
+    // ------------------------------------------------------------
+    // CUSTOM ORBIT CONTROLS (FloatTunes)
+    // ------------------------------------------------------------
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.rotateSpeed = 0.8;
+    this.controls.minDistance = 50;
+    this.controls.maxDistance = 4000;
+
+    // Audio + Video
+    this.audio = document.getElementById("audio");
+    this.video = document.getElementById("video");
+
+    // Events
+    window.addEventListener("resize", () => this.onResize());
+    window.addEventListener("mousemove", e => this.onMouseMove(e));
+    window.addEventListener("click", e => this.onClick(e));
+    window.addEventListener("keydown", e => this.keys[e.key.toLowerCase()] = true);
+    window.addEventListener("keyup", e => this.keys[e.key.toLowerCase()] = false);
+
+    // Init modules
+    this.modules.forEach(m => m.init && m.init(this));
+
+    // ------------------------------------------------------------
+    // FULL GALAXY BUILD
+    // ------------------------------------------------------------
+   
+
+    if (ClusterMod.buildFromJSON) {
+      ClusterMod.buildFromJSON(this, this.data);
+    }
+
+    if (ClusterPageMod.init) {
+      ClusterPageMod.init(this);
+    }
+
+    // Start loop
+this.scene.updateMatrixWorld(true);   // ⭐ FIX: sync billboard meshes
+this.animate();
+
+  },
 
   // ------------------------------------------------------------
   // RESIZE
@@ -113,15 +111,15 @@ async init() {
   // ------------------------------------------------------------
   // MOUSE MOVE
   // ------------------------------------------------------------
-  onMouseMove(e) {
-    this.mouse.x = (e.clientX / innerWidth) * 2 - 1;
-    this.mouse.y = -(e.clientY / innerHeight) * 2 + 1;
-    this.modules.forEach(m => m.onMouseMove && m.onMouseMove(this, e));
-  },
+onMouseMove(e) {
+  this.mouse.x = (e.clientX / innerWidth) * 2 - 1;
+  this.mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+},
+
 
   // ------------------------------------------------------------
   // CLICK HANDLER (raycast)
-// ------------------------------------------------------------
+  // ------------------------------------------------------------
   onClick(e) {
 
     // CLICK‑TO‑SEEK
@@ -172,26 +170,32 @@ async init() {
     this.modules.forEach(m => m.onClick && m.onClick(this, e));
   },
 
-  // ------------------------------------------------------------
-  // MAIN LOOP
-  // ------------------------------------------------------------
-  animate() {
-    requestAnimationFrame(() => this.animate());
-    this.controls.update();
+animate() {
+  requestAnimationFrame(() => this.animate());
 
-    this.modules.forEach(m => m.update && m.update(this, 0.016));
+  // 1) Update camera
+  this.controls.update();
 
-    if (window.ClusterMod && ClusterMod.update) {
-      ClusterMod.update(this, 0.016);
-    }
+  // 2) Update world matrices (billboards, covers, lines)
+  this.scene.updateMatrixWorld(true);
 
-    if (window.CoverMod && CoverMod.update) {
-      CoverMod.update(this, 0.016);
-    }
+  // 3) REAL-TIME RAYCAST (this is the missing piece)
+  this.raycaster.setFromCamera(this.mouse, this.camera);
+  this.modules.forEach(m => m.onMouseMove && m.onMouseMove(this));
 
-    this.renderer.render(this.scene, this.camera);
-  }
-};
+  // 4) Update modules
+  this.modules.forEach(m => m.update && m.update(this, 0.016));
+
+  if (ClusterMod.update) ClusterMod.update(this, 0.016);
+  if (CoverMod.update) CoverMod.update(this, 0.016);
+  if (AudioMod.updateProgress) AudioMod.updateProgress(this);
+
+  // 5) Render
+  this.renderer.render(this.scene, this.camera);
+},
+
+};   
+
 
 // ------------------------------------------------------------
 // REGISTER MODULES
