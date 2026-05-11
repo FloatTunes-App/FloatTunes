@@ -21,9 +21,9 @@ const ClusterPageMod = {
     this.showPage(1);
   },
 
-  // ------------------------------------------------------------
-  // SHOW ONLY BANDS FOR CURRENT PAGE
-  // ------------------------------------------------------------
+// ------------------------------------------------------------
+// SHOW ONLY BANDS FOR CURRENT PAGE
+// ------------------------------------------------------------
 showPage(page) {
 
   // ------------------------------------------------------------
@@ -54,41 +54,52 @@ showPage(page) {
 
 
   // ------------------------------------------------------------
-  // HARD CLAMP — HIDE TIME LABELS + PROGRESS ON NON‑FIRST PAGES
+  // PAGE‑AWARE PROGRESS UI VISIBILITY
   // ------------------------------------------------------------
-  if (this.page !== 1) {
+  const currentNode = AudioMod.currentTrackNode;
 
-    if (AudioMod.timeLabelCurrent)
-      AudioMod.timeLabelCurrent.style.display = "none";
-
-    if (AudioMod.timeLabelTotal)
-      AudioMod.timeLabelTotal.style.display = "none";
-
-    if (AudioMod.progressBaseLine)
-      AudioMod.progressBaseLine.visible = false;
-
-    if (AudioMod.progressFillLine)
-      AudioMod.progressFillLine.visible = false;
+  if (!currentNode) {
+    // No track playing → hide everything
+    if (AudioMod.timeLabelCurrent) AudioMod.timeLabelCurrent.style.display = "none";
+    if (AudioMod.timeLabelTotal)   AudioMod.timeLabelTotal.style.display = "none";
+    if (AudioMod.progressBaseLine) AudioMod.progressBaseLine.visible = false;
+    if (AudioMod.progressFillLine) AudioMod.progressFillLine.visible = false;
 
   } else {
 
-    // ------------------------------------------------------------
-    // RESTORE WHEN RETURNING TO PAGE 1
-    // ------------------------------------------------------------
-    if (AudioMod.currentTrackNode) {
+    // Find the band node of the currently playing track
+    const currentBandNode =
+      currentNode.userData.parent?.userData.parent;
 
-      if (AudioMod.timeLabelCurrent)
-        AudioMod.timeLabelCurrent.style.display = "block";
+    // Is that band visible on this page?
+    const bandIsVisible = currentBandNode?.visible === true;
 
-      if (AudioMod.timeLabelTotal)
-        AudioMod.timeLabelTotal.style.display = "block";
+    if (!bandIsVisible) {
+      // Hide UI if the band is NOT on this page
+      if (AudioMod.timeLabelCurrent) AudioMod.timeLabelCurrent.style.display = "none";
+      if (AudioMod.timeLabelTotal)   AudioMod.timeLabelTotal.style.display = "none";
+      if (AudioMod.progressBaseLine) AudioMod.progressBaseLine.visible = false;
+      if (AudioMod.progressFillLine) AudioMod.progressFillLine.visible = false;
 
-      if (AudioMod.progressBaseLine)
-        AudioMod.progressBaseLine.visible = true;
-
-      if (AudioMod.progressFillLine)
-        AudioMod.progressFillLine.visible = true;
+    } else {
+      // Show UI if the band IS on this page
+      if (AudioMod.timeLabelCurrent) AudioMod.timeLabelCurrent.style.display = "block";
+      if (AudioMod.timeLabelTotal)   AudioMod.timeLabelTotal.style.display = "block";
+      if (AudioMod.progressBaseLine) AudioMod.progressBaseLine.visible = true;
+      if (AudioMod.progressFillLine) AudioMod.progressFillLine.visible = true;
     }
+  }
+
+
+  // ------------------------------------------------------------
+  // HIDE RELATED BASE LINE IF CURRENT BAND IS NOT VISIBLE
+  // ------------------------------------------------------------
+  if (AudioMod.baseLine) {
+    const currentNode = AudioMod.currentTrackNode;
+    const currentBandNode = currentNode?.userData?.parent?.userData?.parent;
+    const bandIsVisible = currentBandNode?.visible === true;
+
+    AudioMod.baseLine.visible = bandIsVisible;
   }
 
 

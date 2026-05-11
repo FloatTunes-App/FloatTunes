@@ -32,7 +32,7 @@ window.ProgressMod = {
   },
 
   // ------------------------------------------------------------
-  // UPDATE BOTTOM BAR + 3D PROGRESS FILL
+  // UPDATE BOTTOM BAR + 3D PROGRESS FILL + FLOATING LABELS
   // ------------------------------------------------------------
   update(app, dt) {
     const audio = app.video.style.display === "block" ? app.video : app.audio;
@@ -54,32 +54,37 @@ window.ProgressMod = {
     if (this.timeTotal)   this.timeTotal.textContent   = this.formatTime(audio.duration);
 
     // ------------------------------------------------------------
-    // 3D PROGRESS FILL LINE BETWEEN TRACK NODES
+    // 3D PROGRESS FILL LINE + FLOATING TIME LABELS
     // ------------------------------------------------------------
     if (AudioMod.progressLine && AudioMod.progressStart && AudioMod.progressEnd) {
-      const clamped = Math.max(0, Math.min(1, ratio));
-      const pos = AudioMod.progressStart.clone().lerp(AudioMod.progressEnd, clamped);
 
+      // 1) Compute current 3D point
+      const clamped = Math.max(0, Math.min(1, ratio));
+      AudioMod.progressCurrent = AudioMod.progressStart.clone().lerp(AudioMod.progressEnd, clamped);
+
+      // 2) Update 3D line geometry
       const geo = AudioMod.progressLine.geometry;
       const posAttr = geo.getAttribute("position");
       posAttr.setXYZ(0, AudioMod.progressStart.x, AudioMod.progressStart.y, AudioMod.progressStart.z);
-      posAttr.setXYZ(1, pos.x, pos.y, pos.z);
+      posAttr.setXYZ(1, AudioMod.progressCurrent.x, AudioMod.progressCurrent.y, AudioMod.progressCurrent.z);
       posAttr.needsUpdate = true;
 
-      // project start & end to screen for floating times
-      const startProjected = AudioMod.progressStart.clone().project(app.camera);
-      const endProjected   = AudioMod.progressEnd.clone().project(app.camera);
+      // 3) Project CURRENT point (not start!)
+      const p = AudioMod.progressCurrent.clone().project(app.camera);
+      const sx = (p.x * 0.5 + 0.5) * window.innerWidth;
+      const sy = (-p.y * 0.5 + 0.5) * window.innerHeight + 20;
 
-      const sxStart = (startProjected.x * 0.5 + 0.5) * window.innerWidth;
-      const syStart = (-startProjected.y * 0.5 + 0.5) * window.innerHeight + 20;
-      const sxEnd   = (endProjected.x * 0.5 + 0.5) * window.innerWidth;
-      const syEnd   = (-endProjected.y * 0.5 + 0.5) * window.innerHeight + 20;
-
+      // 4) Update floating CURRENT TIME label
       if (AudioMod.timeLabelCurrent) {
         AudioMod.timeLabelCurrent.textContent = this.formatTime(audio.currentTime);
-        AudioMod.timeLabelCurrent.style.left = `${sxStart}px`;
-        AudioMod.timeLabelCurrent.style.top  = `${syStart}px`;
+        AudioMod.timeLabelCurrent.style.left = `${sx}px`;
+        AudioMod.timeLabelCurrent.style.top  = `${sy}px`;
       }
+
+      // 5) Project END point for TOTAL TIME label
+      const pEnd = AudioMod.progressEnd.clone().project(app.camera);
+      const sxEnd = (pEnd.x * 0.5 + 0.5) * window.innerWidth;
+      const syEnd = (-pEnd.y * 0.5 + 0.5) * window.innerHeight + 20;
 
       if (AudioMod.timeLabelTotal) {
         AudioMod.timeLabelTotal.textContent = this.formatTime(audio.duration);

@@ -1,68 +1,73 @@
 // ------------------------------------------------------------
-// RAYCAST MODULE (global) — FloatTunes Galaxy
+// RAYCAST MODULE — Exact Band/Album/Track Hover (Visible Only)
 // ------------------------------------------------------------
 window.RaycastMod = {
   name: "raycast",
 
   hovered: null,
 
-  // ------------------------------------------------------------
-  // ON CLICK
-  // ------------------------------------------------------------
-  onClick(app, e) {
-    app.raycaster.setFromCamera(app.mouse, app.camera);
-    const hits = app.raycaster.intersectObjects(app.scene.children, true);
-
-    if (hits.length > 0) {
-      const obj = hits[0].object;
-      if (obj.callback) {
-        obj.callback();
-        return;
-      }
+  // Find nearest ancestor that has a typed userData (band/album/track)
+  resolveTarget(obj) {
+    let cur = obj;
+    while (cur) {
+      const ud = cur.userData;
+      if (ud && ud.type) return cur;   // band / album / track
+      cur = cur.parent;
     }
+    return null;
   },
 
   // ------------------------------------------------------------
-  // ON MOUSE MOVE (hover detection)
+  // CLICK
+  // ------------------------------------------------------------
+  onClick(app, e) {
+    app.scene.updateMatrixWorld();
+
+    // Only raycast visible objects
+    const visibleNodes = ClusterMod.nodes.filter(n => n.visible === true);
+
+    const hits = app.raycaster.intersectObjects(visibleNodes, true);
+    if (!hits.length) return;
+
+    const obj = this.resolveTarget(hits[0].object);
+    if (obj && obj.callback) obj.callback();
+  },
+
+  // ------------------------------------------------------------
+  // HOVER
   // ------------------------------------------------------------
   onMouseMove(app, e) {
-    app.raycaster.setFromCamera(app.mouse, app.camera);
-    const hits = app.raycaster.intersectObjects(app.scene.children, true);
+    app.scene.updateMatrixWorld();
 
-    if (hits.length > 0) {
-      const obj = hits[0].object;
+    // Only raycast visible objects
+    const visibleNodes = ClusterMod.nodes.filter(n => n.visible === true);
 
-      if (this.hovered !== obj) {
-        // clear previous hover
-        if (this.hovered) {
-          AudioMod.hideHover();
-          this.hovered.material.emissive && this.hovered.material.emissive.setHex(0x000000);
-        }
+    const hits = app.raycaster.intersectObjects(visibleNodes, true);
+    const obj = hits.length ? this.resolveTarget(hits[0].object) : null;
 
-        this.hovered = obj;
+    if (obj !== this.hovered) {
+      // clear previous
+      if (this.hovered) {
+        AudioMod.hideHover();
+        if (this.hovered.material?.emissive)
+          this.hovered.material.emissive.setHex(0x000000);
+      }
 
-        // show hover info if available
+      this.hovered = obj;
+
+      if (obj) {
         const ud = obj.userData || {};
-        let text = "";
-        if (ud.hoverTitle) text = ud.hoverTitle;
-        else if (ud.type === "track" && ud.track) text = ud.track.title;
-        else if (ud.type === "album" && ud.album) text = ud.album.title;
-        else if (ud.type === "band" && ud.band) text = ud.band.name;
+        const text =
+          ud.hoverTitle ||
+          ud.band?.name ||
+          ud.album?.title ||
+          ud.track?.title ||
+          "";
 
         if (text) AudioMod.showHover(text);
 
-        // highlight hovered node
-        if (obj.material && obj.material.emissive) {
+        if (obj.material?.emissive)
           obj.material.emissive.setHex(0x44ff44);
-        }
-      }
-    } else {
-      if (this.hovered) {
-        AudioMod.hideHover();
-        if (this.hovered.material && this.hovered.material.emissive) {
-          this.hovered.material.emissive.setHex(0x000000);
-        }
-        this.hovered = null;
       }
     }
   }
