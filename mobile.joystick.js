@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// mobile.joystick.js — Bottom D‑Pad Joystick with Real Movement
+// mobile.joystick.js
 // ------------------------------------------------------------
 window.MobileJoystick = {
   name: "mobileJoystick",

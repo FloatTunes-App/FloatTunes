@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// FloatTunes.mobile.js — Mobile Input Layer (Touch + Gestures)
+// FloatTunes.mobile.js
 // ------------------------------------------------------------
 window.FloatTunesMobile = {
   enabled: false,

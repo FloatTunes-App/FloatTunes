@@ -1,7 +1,7 @@
 @media (max-width: 900px) {
 
   /* ------------------------------------------------------------
-     ROW 1 — JOYSTICK (DESKTOP-STYLE BUTTONS, COMPACT)
+     ROW 1 — JOYSTICK (BUTTONS, COMPACT)
   ------------------------------------------------------------ */
 
   .m-arrows {
@@ -20,7 +20,7 @@
     gap: 12px;
   }
 
-  /* JOYSTICK BUTTON (MATCHES DESKTOP .icon-btn) */
+  /* JOYSTICK BUTTON (.icon-btn) */
   .m-joy {
     width: 36px;                 /* compact desktop scale */
     height: 36px;
@@ -52,7 +52,7 @@
   }
 
   /* ------------------------------------------------------------
-     MOBILE ACTIVE STATES (MATCH DESKTOP EXACTLY)
+     MOBILE ACTIVE STATES
   ------------------------------------------------------------ */
 
   #m-repeat.active,
