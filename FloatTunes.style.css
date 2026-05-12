@@ -230,6 +230,18 @@
     fill: #00eaff;
   }
 
+#time-current,
+#time-total {
+  position: fixed;
+  right: 16px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  font-size: 15px;
+  color: #fff;
+  z-index: 999999 !important;
+  pointer-events: none;
+  text-shadow: 0 0 8px #000;
+}
+
   /* ------------------------------------------------------------
      LYRICS PANEL — FULL WIDTH, BELOW TITLE, ABOVE FOOTER
   ------------------------------------------------------------ */
