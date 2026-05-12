@@ -287,30 +287,38 @@ window.FloatTunesMobile = {
   },
 
   // ------------------------------------------------------------
-  // MOBILE: REPEAT / SHUFFLE ACTIVE STATE
+  // MOBILE: REPEAT / SHUFFLE ACTIVE STATE (SYNC WITH DESKTOP)
   // ------------------------------------------------------------
   enableMobileRepeatShuffle() {
-    const mRepeat = document.getElementById("m-repeat");
-    const mShuffle = document.getElementById("m-shuffle");
+    const mRepeat       = document.getElementById("m-repeat");
+    const mShuffle      = document.getElementById("m-shuffle");
+    const desktopRepeat = document.getElementById("btn-repeat");
+    const desktopShuffle= document.getElementById("btn-shuffle");
 
-    if (mRepeat) {
-      mRepeat.addEventListener("click", () => {
-        const desktop = document.getElementById("btn-repeat");
-        if (desktop) desktop.click();
-        mRepeat.classList.toggle("active");
-      });
+    if (!mRepeat && !mShuffle) return;
+
+    const syncFromDesktop = () => {
+      if (mRepeat && desktopRepeat) {
+        const isActive = desktopRepeat.classList.contains("active");
+        mRepeat.classList.toggle("active", isActive);
+      }
+      if (mShuffle && desktopShuffle) {
+        const isActive = desktopShuffle.classList.contains("active");
+        mShuffle.classList.toggle("active", isActive);
+      }
+    };
+
+    if (desktopRepeat) {
+      desktopRepeat.addEventListener("click", syncFromDesktop);
+    }
+    if (desktopShuffle) {
+      desktopShuffle.addEventListener("click", syncFromDesktop);
     }
 
-    if (mShuffle) {
-      mShuffle.addEventListener("click", () => {
-        const desktop = document.getElementById("btn-shuffle");
-        if (desktop) desktop.click();
-        mShuffle.classList.toggle("active");
-      });
-    }
+    // initial sync on load
+    syncFromDesktop();
   }
 };
-
 
 // ------------------------------------------------------------
 // AUTO‑INIT
