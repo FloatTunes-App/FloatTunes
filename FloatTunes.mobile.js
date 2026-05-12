@@ -24,16 +24,13 @@ window.FloatTunesMobile = {
 
     console.log("FloatTunes Mobile Mode Enabled");
 
-    // Desktop OrbitControls already handle rotation + wheel zoom.
-    // On mobile we just call controls.rotateLeft/rotateUp from our touch layer.
-    // Do NOT override rotateLeft/rotateUp here.
-
-    // If you want to disable wheel zoom on mobile only, you can do it via CSS
-    // or a UA check around wheel, but we leave desktop logic untouched.
-
+    // Core mobile interactions
     this.enableTouchCamera(app);
     this.enableTouchTap(app);
     this.enablePinchZoom(app);
+
+    // Mobile UI interactions
+    this.enableMobileRepeatShuffle();
 
     // Prevent ghost desktop click ONLY on the canvas
     app.renderer.domElement.addEventListener(
@@ -43,6 +40,12 @@ window.FloatTunesMobile = {
       },
       true
     );
+
+    // Register joystick module (joystick already exists in HTML)
+    if (window.MobileJoystick) {
+      MobileJoystick.init(app);
+      app.register(MobileJoystick);
+    }
   },
 
   // ------------------------------------------------------------
@@ -114,7 +117,7 @@ window.FloatTunesMobile = {
         return;
       }
 
-      // ⭐ Rotate camera using OrbitControls' public API
+      // Rotate camera using OrbitControls' public API
       const rotSpeed = 0.005;
       app.controls.rotateLeft(dx * rotSpeed);
       app.controls.rotateUp(dy * rotSpeed);
@@ -129,7 +132,7 @@ window.FloatTunesMobile = {
   },
 
   // ------------------------------------------------------------
-  // LONG PRESS → DRAG BAND CLUSTER (VISIBLE ONLY)
+  // LONG PRESS → DRAG BAND CLUSTER
   // ------------------------------------------------------------
   tryStartClusterDrag(app, x, y) {
     app.mouse.x = (x / innerWidth) * 2 - 1;
@@ -172,10 +175,16 @@ window.FloatTunesMobile = {
     });
 
     ClusterMod.update(app, 0);
+
+    // Rebuild progress line so it follows moved nodes
+    if (window.AudioMod && AudioMod.currentTrackNode) {
+      AudioMod.createProgressLine(app, AudioMod.currentTrackNode);
+      AudioMod.updateProgress(app);
+    }
   },
 
   // ------------------------------------------------------------
-  // TAP → EXPAND BAND / ALBUM / PLAY TRACK (VISIBLE ONLY)
+  // TAP → SEEK ON PROGRESS + EXPAND BAND / ALBUM / PLAY TRACK
   // ------------------------------------------------------------
   enableTouchTap(app) {
     const canvas = app.renderer.domElement;
@@ -187,9 +196,42 @@ window.FloatTunesMobile = {
       const x = t.clientX;
       const y = t.clientY;
 
+      // update mouse for raycaster
       app.mouse.x = (x / innerWidth) * 2 - 1;
       app.mouse.y = -(y / innerHeight) * 2 + 1;
 
+      // --------------------------------------------------------
+      // 1) CLICK‑TO‑SEEK ON 3D PROGRESS LINE (MIRROR app.onClick)
+      // --------------------------------------------------------
+      if (window.AudioMod && AudioMod.progressBaseLine) {
+        app.raycaster.setFromCamera(app.mouse, app.camera);
+
+        if (AudioMod.progressClickMesh) {
+          const hit = app.raycaster.intersectObject(AudioMod.progressClickMesh, true);
+          if (hit.length > 0) {
+            const point = hit[0].point;
+            const total = AudioMod.progressStart.distanceTo(AudioMod.progressEnd);
+            const dist  = AudioMod.progressStart.distanceTo(point);
+            const ratio = Math.min(Math.max(dist / total, 0), 1);
+            if (app.audio.duration) app.audio.currentTime = app.audio.duration * ratio;
+            return;
+          }
+        }
+
+        const hit2 = app.raycaster.intersectObject(AudioMod.progressBaseLine, true);
+        if (hit2.length > 0) {
+          const point = hit2[0].point;
+          const total = AudioMod.progressStart.distanceTo(AudioMod.progressEnd);
+          const dist  = AudioMod.progressStart.distanceTo(point);
+          const ratio = Math.min(Math.max(dist / total, 0), 1);
+          if (app.audio.duration) app.audio.currentTime = app.audio.duration * ratio;
+          return;
+        }
+      }
+
+      // --------------------------------------------------------
+      // 2) NORMAL NODE TAP (TRACK / BAND / ALBUM)
+      // --------------------------------------------------------
       app.raycaster.setFromCamera(app.mouse, app.camera);
 
       const visibleNodes = ClusterMod.nodes.filter(n => n.visible === true);
@@ -242,50 +284,39 @@ window.FloatTunesMobile = {
     canvas.addEventListener("touchend", () => {
       lastDist = 0;
     });
+  },
+
+  // ------------------------------------------------------------
+  // MOBILE: REPEAT / SHUFFLE ACTIVE STATE
+  // ------------------------------------------------------------
+  enableMobileRepeatShuffle() {
+    const mRepeat = document.getElementById("m-repeat");
+    const mShuffle = document.getElementById("m-shuffle");
+
+    if (mRepeat) {
+      mRepeat.addEventListener("click", () => {
+        const desktop = document.getElementById("btn-repeat");
+        if (desktop) desktop.click();
+        mRepeat.classList.toggle("active");
+      });
+    }
+
+    if (mShuffle) {
+      mShuffle.addEventListener("click", () => {
+        const desktop = document.getElementById("btn-shuffle");
+        if (desktop) desktop.click();
+        mShuffle.classList.toggle("active");
+      });
+    }
   }
 };
 
+
 // ------------------------------------------------------------
-// MOBILE FOOTER HELPER — run only on mobile
+// AUTO‑INIT
 // ------------------------------------------------------------
-this.applyMobileFooterLayout = function () {
-  const bar = document.getElementById("bottom-bar");
-  if (!bar) return;
-
-  const rowControls = document.createElement("div");
-  rowControls.id = "mobile-row-controls";
-
-  const rowLyrics = document.createElement("div");
-  rowLyrics.id = "mobile-row-lyrics";
-
-  const rowPage = document.createElement("div");
-  rowPage.id = "mobile-row-page";
-
-  const controls = document.getElementById("player-controls");
-  const btnLyrics = document.getElementById("btn-lyrics");
-  const btnRelated = document.getElementById("btn-related");
-  const pageSwitch = document.getElementById("page-switch");
-
-  if (controls) rowControls.appendChild(controls);
-  if (btnLyrics && btnRelated) {
-    rowLyrics.appendChild(btnLyrics);
-    rowLyrics.appendChild(btnRelated);
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.App) {
+    FloatTunesMobile.init(App);
   }
-  if (pageSwitch) rowPage.appendChild(pageSwitch);
-
-  bar.innerHTML = "";
-  bar.appendChild(rowControls);
-  bar.appendChild(rowLyrics);
-  bar.appendChild(rowPage);
-
-  bar.classList.add("mobile-footer");
-};
-
-const isMobile =
-  window.matchMedia("(max-width: 900px)").matches ||
-  "ontouchstart" in window ||
-  navigator.maxTouchPoints > 0;
-
-if (isMobile) {
-  this.applyMobileFooterLayout();
-}
+});

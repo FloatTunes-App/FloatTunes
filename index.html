@@ -2,30 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FloatTunes</title>
+  <title>TunesFlix</title>
 
   <!-- RESPONSIVE VIEWPORT -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 
   <!-- DESKTOP STYLE -->
   <link rel="stylesheet" href="style.css">
- <link rel="stylesheet" href="video.style.css">
+  <link rel="stylesheet" href="video.style.css">
  
   <!-- MOBILE STYLE (auto-applies on small screens) -->
   <link rel="stylesheet" href="FloatTunes.style.css" media="(max-width: 900px)">
+  <link rel="stylesheet" href="mobile.joystick.style.css" media="(max-width: 900px)">
 </head>
 
 <body>
   <!-- 3D GALAXY CANVAS -->
   <canvas id="galaxy"></canvas>
  
- <div id="time-current"></div>
- <div id="time-total"></div>
+  <div id="time-current"></div>
+  <div id="time-total"></div>
 
   <!-- TRACK TITLE -->
   <div id="track-title"></div>
 
-  <!-- BOTTOM CONTROL BAR -->
+  <!-- BOTTOM CONTROL BAR (DESKTOP) -->
   <div id="bottom-bar">
 
     <!-- LEFT SIDE -->
@@ -94,9 +95,114 @@
 
   </div>
 
+<!-- MOBILE 3‑ROW FOOTER (only visible under 900px) -->
+<div id="mobile-footer">
+
+  <!-- ROW 3 — MAIN CONTROLS -->
+  <div class="m-wrap" id="m-wrap-3">
+    <div class="m-controls">
+
+      <button id="m-prev" class="m-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 4h2v16H4z"/>
+          <path d="M6 12l12 8V4L6 12z"/>
+        </svg>
+      </button>
+
+      <button id="m-play" class="m-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </button>
+
+      <button id="m-pause" class="m-icon" style="display:none;">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 5h4v14H6zm8 0h4v14h-4z"/>
+        </svg>
+      </button>
+
+      <button id="m-next" class="m-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 4l12 8-12 8z"/>
+          <path d="M18 4h2v16h-2z"/>
+        </svg>
+      </button>
+
+      <button id="m-repeat" class="m-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M17 1l4 4-4 4V6H7a3 3 0 0 0-3 3v1H2V9a5 5 0 0 1 5-5h10V1zm-10 22l-4-4 4-4v3h10a3 3 0 0 0 3-3v-1h2v1a5 5 0 0 1-5 5H7v3z"/>
+        </svg>
+      </button>
+
+      <button id="m-shuffle" class="m-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M17 3h4v4h-2V5h-2V3zm0 18h4v-4h-2v2h-2v2zM3 6h4l12 12h-4L3 6zm0 12h4l4-4-2-2-6 6z"/>
+        </svg>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ROW 2 — META + PAGE CLUSTER (ONE ROW, SIDE BY SIDE) -->
+  <div class="m-wrap" id="m-wrap-2">
+    <div class="m-row2">
+
+      <!-- LEFT: META BUTTONS -->
+      <div class="m-meta">
+        <button id="m-lyrics" class="m-btn">Lyrics</button>
+        <button id="m-related" class="m-btn">Related</button>
+      </div>
+
+      <!-- RIGHT: PAGE SWITCH -->
+      <div class="m-page">
+        <span id="m-page-prev" class="m-page-btn">&lt;</span>
+        <span id="m-page-number">1</span>
+        <span id="m-page-next" class="m-page-btn">&gt;</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ROW 1 — JOYSTICK ONLY (SINGLE ARROW ROW) -->
+  <div class="m-wrap" id="m-wrap-1">
+    <div class="m-arrows">
+
+      <div class="m-updown">
+        <div class="m-joy" data-move="forward">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 5l-7 7h14z"/>
+          </svg>
+        </div>
+
+        <div class="m-joy" data-move="back">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 19l7-7H5z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="m-joy" data-move="left">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12l7 7V5z"/>
+        </svg>
+      </div>
+
+      <div class="m-joy" data-move="right">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 12l-7-7v14z"/>
+        </svg>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+
   <div id="video-panel">
-  <div id="video-close">✕</div>
-  <video id="video" controls playsinline></video>
+    <div id="video-close">✕</div>
+    <video id="video" controls playsinline></video>
   </div>
 
   <!-- LYRICS PANEL -->
@@ -120,12 +226,125 @@
   <script src="cover.js"></script>
   <script src="cluster.page.js"></script>
   <script src="video.js"></script>
-
+  <script src="mobile.joystick.js"></script>
 
   <!-- MOBILE ENGINE (auto-detects mobile) -->
   <script src="FloatTunes.mobile.js"></script>
 
   <!-- CORE ENGINE -->
   <script src="app.js"></script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+    function trigger(id) {
+      const el = document.getElementById(id);
+      if (el) el.click();
+    }
+
+    // -------------------------------
+    // PLAY / PAUSE
+    // -------------------------------
+    const mPlay = document.getElementById("m-play");
+    const mPause = document.getElementById("m-pause");
+
+    if (mPlay) {
+      mPlay.addEventListener("click", () => {
+        trigger("btn-play");
+        mPlay.style.display = "none";
+        mPause.style.display = "inline-flex";
+      });
+    }
+
+    if (mPause) {
+      mPause.addEventListener("click", () => {
+        trigger("btn-pause");
+        mPause.style.display = "none";
+        mPlay.style.display = "inline-flex";
+      });
+    }
+
+    // -------------------------------
+    // PREVIOUS / NEXT
+    // -------------------------------
+    const mPrev = document.getElementById("m-prev");
+    const mNext = document.getElementById("m-next");
+
+    if (mPrev) mPrev.addEventListener("click", () => trigger("btn-prev"));
+    if (mNext) mNext.addEventListener("click", () => trigger("btn-next"));
+
+    // -------------------------------
+    // REPEAT / SHUFFLE
+    // -------------------------------
+    const mRepeat = document.getElementById("m-repeat");
+    const mShuffle = document.getElementById("m-shuffle");
+
+    if (mRepeat) mRepeat.addEventListener("click", () => trigger("btn-repeat"));
+    if (mShuffle) mShuffle.addEventListener("click", () => trigger("btn-shuffle"));
+
+    // -------------------------------
+    // LYRICS / RELATED
+    // -------------------------------
+    const mLyrics = document.getElementById("m-lyrics");
+    const mRelated = document.getElementById("m-related");
+
+    if (mLyrics) mLyrics.addEventListener("click", () => trigger("btn-lyrics"));
+    if (mRelated) mRelated.addEventListener("click", () => trigger("btn-related"));
+
+    // -------------------------------
+    // PAGE CLUSTER (MOBILE → DESKTOP)
+    // -------------------------------
+    const mPagePrev   = document.getElementById("m-page-prev");
+    const mPageNext   = document.getElementById("m-page-next");
+    const mPageNumber = document.getElementById("m-page-number");
+    const dPageNumber = document.getElementById("page-number");
+
+    if (mPagePrev) {
+      mPagePrev.addEventListener("click", () => {
+        trigger("page-prev");              // use existing desktop logic
+        if (dPageNumber && mPageNumber) {  // sync label
+          mPageNumber.textContent = dPageNumber.textContent;
+        }
+      });
+    }
+
+    if (mPageNext) {
+      mPageNext.addEventListener("click", () => {
+        trigger("page-next");              // use existing desktop logic
+        if (dPageNumber && mPageNumber) {  // sync label
+          mPageNumber.textContent = dPageNumber.textContent;
+        }
+      });
+    }
+
+    // initial sync on load
+    if (dPageNumber && mPageNumber) {
+      mPageNumber.textContent = dPageNumber.textContent;
+    }
+
+    // -------------------------------
+    // AUTO-SYNC PLAY/PAUSE WITH AUDIO
+    // -------------------------------
+    const audio = document.getElementById("audio");
+
+    if (audio) {
+      audio.addEventListener("play", () => {
+        if (mPlay && mPause) {
+          mPlay.style.display = "none";
+          mPause.style.display = "inline-flex";
+        }
+      });
+
+      audio.addEventListener("pause", () => {
+        if (mPlay && mPause) {
+          mPause.style.display = "none";
+          mPlay.style.display = "inline-flex";
+        }
+      });
+    }
+
+  });
+  </script>
+
 </body>
 </html>

@@ -59,7 +59,7 @@ const App = {
     this.scene.add(new THREE.AmbientLight(0xffffff, 1.3));
 
     // ------------------------------------------------------------
-    // CUSTOM ORBIT CONTROLS (FloatTunes)
+    // CUSTOM ORBIT CONTROLS
     // ------------------------------------------------------------
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.rotateSpeed = 0.8;
@@ -83,8 +83,6 @@ const App = {
     // ------------------------------------------------------------
     // FULL GALAXY BUILD
     // ------------------------------------------------------------
-   
-
     if (ClusterMod.buildFromJSON) {
       ClusterMod.buildFromJSON(this, this.data);
     }
@@ -93,10 +91,11 @@ const App = {
       ClusterPageMod.init(this);
     }
 
-    // Start loop
-this.scene.updateMatrixWorld(true);   // ⭐ FIX: sync billboard meshes
-this.animate();
+    // Sync world
+    this.scene.updateMatrixWorld(true);
 
+    // Start loop
+    this.animate();
   },
 
   // ------------------------------------------------------------
@@ -111,17 +110,15 @@ this.animate();
   // ------------------------------------------------------------
   // MOUSE MOVE
   // ------------------------------------------------------------
-onMouseMove(e) {
-  this.mouse.x = (e.clientX / innerWidth) * 2 - 1;
-  this.mouse.y = -(e.clientY / innerHeight) * 2 + 1;
-},
-
+  onMouseMove(e) {
+    this.mouse.x = (e.clientX / innerWidth) * 2 - 1;
+    this.mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+  },
 
   // ------------------------------------------------------------
-  // CLICK HANDLER (raycast)
+  // CLICK HANDLER
   // ------------------------------------------------------------
   onClick(e) {
-
     // CLICK‑TO‑SEEK
     if (AudioMod.progressBaseLine) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
@@ -170,31 +167,27 @@ onMouseMove(e) {
     this.modules.forEach(m => m.onClick && m.onClick(this, e));
   },
 
-animate() {
-  requestAnimationFrame(() => this.animate());
+  // ------------------------------------------------------------
+  // MAIN LOOP
+  // ------------------------------------------------------------
+  animate() {
+    requestAnimationFrame(() => this.animate());
 
-  // 1) Update camera
-  this.controls.update();
+    this.controls.update();
+    this.scene.updateMatrixWorld(true);
 
-  // 2) Update world matrices (billboards, covers, lines)
-  this.scene.updateMatrixWorld(true);
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    this.modules.forEach(m => m.onMouseMove && m.onMouseMove(this));
 
-  // 3) REAL-TIME RAYCAST (this is the missing piece)
-  this.raycaster.setFromCamera(this.mouse, this.camera);
-  this.modules.forEach(m => m.onMouseMove && m.onMouseMove(this));
+    this.modules.forEach(m => m.update && m.update(this, 0.016));
 
-  // 4) Update modules
-  this.modules.forEach(m => m.update && m.update(this, 0.016));
+    if (ClusterMod.update) ClusterMod.update(this, 0.016);
+    if (CoverMod.update) CoverMod.update(this, 0.016);
+    if (AudioMod.updateProgress) AudioMod.updateProgress(this);
 
-  if (ClusterMod.update) ClusterMod.update(this, 0.016);
-  if (CoverMod.update) CoverMod.update(this, 0.016);
-  if (AudioMod.updateProgress) AudioMod.updateProgress(this);
-
-  // 5) Render
-  this.renderer.render(this.scene, this.camera);
-},
-
-};   
+    this.renderer.render(this.scene, this.camera);
+  }
+};
 
 
 // ------------------------------------------------------------
@@ -210,6 +203,7 @@ App.register(RaycastMod);
 App.register(MovementMod);
 App.register(ClusterPageMod);
 App.register(FloatTunesMobile);
+App.register(MobileJoystick);
 App.register(VideoMod);
 
 // ------------------------------------------------------------
